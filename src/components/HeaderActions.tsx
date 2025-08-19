@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Plus, LogOut, FolderOpen, ChevronDown } from "lucide-react";
+import { Plus, LogOut, FolderOpen, ChevronDown, Github } from "lucide-react";
 import { AuthDialog } from "@/components/auth/AuthDialog";
 import { signOut } from "@/actions";
 import { getProjects } from "@/actions/get-projects";
@@ -45,6 +45,7 @@ export function HeaderActions({ user, projectId }: HeaderActionsProps) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [initialLoading, setInitialLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [githubExporting, setGithubExporting] = useState(false);
 
   // Load projects initially
   useEffect(() => {
@@ -90,6 +91,34 @@ export function HeaderActions({ user, projectId }: HeaderActionsProps) {
       data: {},
     });
     router.push(`/${project.id}`);
+  };
+
+  const handleGithubExport = async () => {
+    if (!projectId) return;
+    
+    setGithubExporting(true);
+    try {
+      // TODO: Implement GitHub export functionality
+      const response = await fetch(`/api/github/export`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ projectId }),
+      });
+      
+      if (response.ok) {
+        const { repositoryUrl } = await response.json();
+        window.open(repositoryUrl, '_blank');
+      } else {
+        throw new Error('Failed to export to GitHub');
+      }
+    } catch (error) {
+      console.error('GitHub export failed:', error);
+      // TODO: Add proper error handling/toast notification
+    } finally {
+      setGithubExporting(false);
+    }
   };
 
   if (!user) {
@@ -159,6 +188,19 @@ export function HeaderActions({ user, projectId }: HeaderActionsProps) {
         <Plus className="h-4 w-4" />
         New Design
       </Button>
+
+      {projectId && (
+        <Button
+          variant="outline"
+          className="flex items-center gap-2 h-8"
+          onClick={handleGithubExport}
+          disabled={githubExporting}
+          title="Export to GitHub"
+        >
+          <Github className="h-4 w-4" />
+          {githubExporting ? "Exporting..." : "Export to GitHub"}
+        </Button>
+      )}
 
       <Button
         variant="ghost"
